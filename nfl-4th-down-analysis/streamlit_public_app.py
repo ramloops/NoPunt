@@ -1,307 +1,105 @@
-"""
-Super Bowl LX 4th Down Analysis
-================================
-Public Streamlit App with AI Chat on Home Screen
-"""
-
 import streamlit as st
 import pandas as pd
 
-# ============================================
-# PAGE CONFIG
-# ============================================
-st.set_page_config(
-    page_title="Super Bowl LX: 4th Down Analysis",
-    page_icon="🏈",
-    layout="wide"
-)
+st.set_page_config(page_title="Super Bowl LX: 4th Down Analysis", page_icon="🏈", layout="wide")
 
-# ============================================
-# SAMPLE DATA
-# ============================================
-def get_fourth_down_data():
-    """Patriots 4th down data from Super Bowl LX"""
-    return pd.DataFrame([
-        {"QUARTER": 1, "TIME": "10:23", "YARDS_TO_GO": 8, "FIELD_POSITION": "SEA 44", 
-         "NE_SCORE": 0, "SEA_SCORE": 3, "SCORE_DIFFERENTIAL": -3, "PLAY_TYPE": "punt",
-         "WIN_PROB_PCT": 38.0, "WPA_PCT": -3.0, "EPA": -0.5, "PUNT_ATTEMPT": 1,
-         "PLAY_DESCRIPTION": "Punt to SEA 20"},
-        {"QUARTER": 1, "TIME": "5:45", "YARDS_TO_GO": 15, "FIELD_POSITION": "NE 35",
-         "NE_SCORE": 0, "SEA_SCORE": 3, "SCORE_DIFFERENTIAL": -3, "PLAY_TYPE": "punt",
-         "WIN_PROB_PCT": 35.0, "WPA_PCT": -2.0, "EPA": -0.3, "PUNT_ATTEMPT": 1,
-         "PLAY_DESCRIPTION": "Punt downed at SEA 15"},
-        {"QUARTER": 2, "TIME": "9:30", "YARDS_TO_GO": 17, "FIELD_POSITION": "NE 28",
-         "NE_SCORE": 0, "SEA_SCORE": 6, "SCORE_DIFFERENTIAL": -6, "PLAY_TYPE": "punt",
-         "WIN_PROB_PCT": 25.0, "WPA_PCT": -3.0, "EPA": -0.4, "PUNT_ATTEMPT": 1,
-         "PLAY_DESCRIPTION": "Punt to SEA 25"},
-        {"QUARTER": 2, "TIME": "2:15", "YARDS_TO_GO": 6, "FIELD_POSITION": "SEA 38",
-         "NE_SCORE": 0, "SEA_SCORE": 6, "SCORE_DIFFERENTIAL": -6, "PLAY_TYPE": "punt",
-         "WIN_PROB_PCT": 22.0, "WPA_PCT": -2.5, "EPA": -0.6, "PUNT_ATTEMPT": 1,
-         "PLAY_DESCRIPTION": "Punt into end zone, touchback"},
-        {"QUARTER": 3, "TIME": "8:40", "YARDS_TO_GO": 1, "FIELD_POSITION": "OWN 41",
-         "NE_SCORE": 0, "SEA_SCORE": 12, "SCORE_DIFFERENTIAL": -12, "PLAY_TYPE": "punt",
-         "WIN_PROB_PCT": 12.0, "WPA_PCT": -4.2, "EPA": -0.8, "PUNT_ATTEMPT": 1,
-         "PLAY_DESCRIPTION": "4th & 1 PUNT from own 41 - THE KEY PLAY"},
-        {"QUARTER": 3, "TIME": "2:30", "YARDS_TO_GO": 8, "FIELD_POSITION": "NE 23",
-         "NE_SCORE": 0, "SEA_SCORE": 12, "SCORE_DIFFERENTIAL": -12, "PLAY_TYPE": "punt",
-         "WIN_PROB_PCT": 8.0, "WPA_PCT": -2.0, "EPA": -0.3, "PUNT_ATTEMPT": 1,
-         "PLAY_DESCRIPTION": "Punt to SEA 45"},
-        {"QUARTER": 4, "TIME": "12:05", "YARDS_TO_GO": 11, "FIELD_POSITION": "NE 19",
-         "NE_SCORE": 6, "SEA_SCORE": 19, "SCORE_DIFFERENTIAL": -13, "PLAY_TYPE": "punt",
-         "WIN_PROB_PCT": 5.0, "WPA_PCT": -1.5, "EPA": -0.2, "PUNT_ATTEMPT": 1,
-         "PLAY_DESCRIPTION": "Punt to SEA 35"},
-        {"QUARTER": 4, "TIME": "5:20", "YARDS_TO_GO": 4, "FIELD_POSITION": "SEA 48",
-         "NE_SCORE": 13, "SEA_SCORE": 22, "SCORE_DIFFERENTIAL": -9, "PLAY_TYPE": "punt",
-         "WIN_PROB_PCT": 6.0, "WPA_PCT": -3.0, "EPA": -0.7, "PUNT_ATTEMPT": 1,
-         "PLAY_DESCRIPTION": "Punt with 5 min left, down 9"},
-    ])
+# Data
+fourth_downs = pd.DataFrame([
+    {"QUARTER": 1, "TIME": "10:23", "YARDS_TO_GO": 8, "FIELD_POSITION": "SEA 44", 
+     "NE_SCORE": 0, "SEA_SCORE": 3, "SCORE_DIFF": -3, "WIN_PROB": 38.0, "WPA": -3.0, "EPA": -0.5, "PUNT": 1},
+    {"QUARTER": 1, "TIME": "5:45", "YARDS_TO_GO": 15, "FIELD_POSITION": "NE 35",
+     "NE_SCORE": 0, "SEA_SCORE": 3, "SCORE_DIFF": -3, "WIN_PROB": 35.0, "WPA": -2.0, "EPA": -0.3, "PUNT": 1},
+    {"QUARTER": 2, "TIME": "9:30", "YARDS_TO_GO": 17, "FIELD_POSITION": "NE 28",
+     "NE_SCORE": 0, "SEA_SCORE": 6, "SCORE_DIFF": -6, "WIN_PROB": 25.0, "WPA": -3.0, "EPA": -0.4, "PUNT": 1},
+    {"QUARTER": 2, "TIME": "2:15", "YARDS_TO_GO": 6, "FIELD_POSITION": "SEA 38",
+     "NE_SCORE": 0, "SEA_SCORE": 6, "SCORE_DIFF": -6, "WIN_PROB": 22.0, "WPA": -2.5, "EPA": -0.6, "PUNT": 1},
+    {"QUARTER": 3, "TIME": "8:40", "YARDS_TO_GO": 1, "FIELD_POSITION": "OWN 41",
+     "NE_SCORE": 0, "SEA_SCORE": 12, "SCORE_DIFF": -12, "WIN_PROB": 12.0, "WPA": -4.2, "EPA": -0.8, "PUNT": 1},
+    {"QUARTER": 3, "TIME": "2:30", "YARDS_TO_GO": 8, "FIELD_POSITION": "NE 23",
+     "NE_SCORE": 0, "SEA_SCORE": 12, "SCORE_DIFF": -12, "WIN_PROB": 8.0, "WPA": -2.0, "EPA": -0.3, "PUNT": 1},
+    {"QUARTER": 4, "TIME": "12:05", "YARDS_TO_GO": 11, "FIELD_POSITION": "NE 19",
+     "NE_SCORE": 6, "SEA_SCORE": 19, "SCORE_DIFF": -13, "WIN_PROB": 5.0, "WPA": -1.5, "EPA": -0.2, "PUNT": 1},
+    {"QUARTER": 4, "TIME": "5:20", "YARDS_TO_GO": 4, "FIELD_POSITION": "SEA 48",
+     "NE_SCORE": 13, "SEA_SCORE": 22, "SCORE_DIFF": -9, "WIN_PROB": 6.0, "WPA": -3.0, "EPA": -0.7, "PUNT": 1},
+])
 
-# ============================================
-# AI CHAT FUNCTION
-# ============================================
-def get_ai_response(question, fourth_downs_df):
-    """Get AI response about the game data"""
-    try:
-        import anthropic
-        
-        # Build context from data
-        data_context = fourth_downs_df.to_string()
-        
-        system_prompt = f"""You are an NFL analytics expert analyzing the Patriots' 4th down decisions in Super Bowl LX (Seahawks 29, Patriots 13).
-
-Here is the data on all Patriots 4th down plays:
-{data_context}
-
-Key facts:
-- NFL 4th & 1 conversion rate is 72%
-- The Patriots punted on 4th & 1 from their own 41 while down 12-0 in Q3
-- WPA = Win Probability Added (negative means the decision hurt their chances)
-- EPA = Expected Points Added
-
-Answer questions concisely and reference specific plays from the data."""
-
-        client = anthropic.Anthropic(api_key=st.secrets.get("ANTHROPIC_API_KEY", ""))
-        
-        message = client.messages.create(
-            model="claude-sonnet-4-20250514",
-            max_tokens=500,
-            system=system_prompt,
-            messages=[{"role": "user", "content": question}]
-        )
-        
-        return message.content[0].text
-    except Exception as e:
-        return f"AI not available. Error: {str(e)[:100]}"
-
-# ============================================
-# LOAD DATA
-# ============================================
-fourth_downs = get_fourth_down_data()
-
-# Grade decisions
-def grade_decision(row):
-    ydstogo = row.get('YARDS_TO_GO', 10)
-    score_diff = row.get('SCORE_DIFFERENTIAL', 0)
-    wpa = row.get('WPA_PCT', 0)
-    punt = row.get('PUNT_ATTEMPT', 0)
-    
-    if punt == 1:
-        if ydstogo <= 1 and score_diff <= -10:
+def grade(row):
+    if row["PUNT"] == 1:
+        if row["YARDS_TO_GO"] <= 1 and row["SCORE_DIFF"] <= -10:
             return "🔴 TERRIBLE"
-        elif ydstogo <= 2 and score_diff <= -7:
+        elif row["YARDS_TO_GO"] <= 2 and row["SCORE_DIFF"] <= -7:
             return "🔴 BAD"
-        elif ydstogo <= 4 and score_diff <= -9:
-            return "🟡 QUESTIONABLE"
-        elif wpa < -3:
+        elif row["WPA"] < -2.5:
             return "🟡 QUESTIONABLE"
     return "✅ OK"
 
-fourth_downs['GRADE'] = fourth_downs.apply(grade_decision, axis=1)
+fourth_downs["GRADE"] = fourth_downs.apply(grade, axis=1)
 
-# ============================================
-# HEADER
-# ============================================
+# Header
 st.title("🏈 Super Bowl LX: 4th Down Analysis")
 st.markdown("### Seahawks 29 - Patriots 13")
-st.markdown("*Why conservative play-calling cost New England the game*")
 
-# ============================================
-# HOME SCREEN: AI CHAT + KEY STATS
-# ============================================
+# Metrics
+c1, c2, c3, c4 = st.columns(4)
+c1.metric("4th Down Punts", len(fourth_downs))
+c2.metric("Bad Decisions", len(fourth_downs[fourth_downs["GRADE"].str.contains("🔴")]))
+c3.metric("Total WPA Lost", f"{fourth_downs['WPA'].sum():.1f}%")
+c4.metric("Total EPA Lost", f"{fourth_downs['EPA'].sum():.2f}")
 
-# Top row: Key metrics
-col1, col2, col3, col4 = st.columns(4)
+st.markdown("---")
 
-punts = fourth_downs[fourth_downs['PUNT_ATTEMPT'] == 1]
+# Key Play
+st.subheader("🔥 THE KEY PLAY: 4th & 1, down 12-0, Q3")
+col1, col2 = st.columns(2)
 
 with col1:
-    st.metric("4th Down Punts", len(punts))
+    st.error("**Decision: PUNT** 👎")
+    st.metric("Field Position", "Own 41-yard line")
+    st.metric("Win Probability", "12%")
+    st.metric("WPA from Punt", "-4.2%")
+
 with col2:
-    bad_decisions = len(fourth_downs[fourth_downs['GRADE'].str.contains('🔴|🟡')])
-    st.metric("Bad/Questionable", bad_decisions)
-with col3:
-    total_wpa = punts['WPA_PCT'].sum()
-    st.metric("Total WPA Lost", f"{total_wpa:.1f}%")
-with col4:
-    total_epa = punts['EPA'].sum()
-    st.metric("Total EPA Lost", f"{total_epa:.2f}")
-
-st.markdown("---")
-
-# Two columns: AI Chat on left, Key Play on right
-chat_col, play_col = st.columns([1, 1])
-
-# ============================================
-# LEFT: AI CHAT
-# ============================================
-with chat_col:
-    st.subheader("🤖 Ask About the Game")
-    
-    # Initialize chat history
-    if "messages" not in st.session_state:
-        st.session_state.messages = []
-    
-    # Display chat history
-    for message in st.session_state.messages:
-        with st.chat_message(message["role"]):
-            st.markdown(message["content"])
-    
-    # Example questions
-    st.caption("Try asking:")
-    example_cols = st.columns(2)
-    with example_cols[0]:
-        if st.button("What was the worst decision?", use_container_width=True):
-            st.session_state.pending_question = "What was the worst 4th down decision and why?"
-    with example_cols[1]:
-        if st.button("Should they have gone for it?", use_container_width=True):
-            st.session_state.pending_question = "Should the Patriots have gone for it on 4th & 1?"
-    
-    # Chat input
-    question = st.chat_input("Ask about Patriots' 4th down decisions...")
-    
-    # Handle pending question from button click
-    if "pending_question" in st.session_state:
-        question = st.session_state.pending_question
-        del st.session_state.pending_question
-    
-    if question:
-        # Add user message
-        st.session_state.messages.append({"role": "user", "content": question})
-        with st.chat_message("user"):
-            st.markdown(question)
-        
-        # Get AI response
-        with st.chat_message("assistant"):
-            with st.spinner("Analyzing..."):
-                response = get_ai_response(question, fourth_downs)
-                st.markdown(response)
-        
-        st.session_state.messages.append({"role": "assistant", "content": response})
-        st.rerun()
-
-# ============================================
-# RIGHT: THE KEY PLAY
-# ============================================
-with play_col:
-    st.subheader("🔥 The Key Play")
-    
-    # Highlight box
-    st.error("**4th & 1 from own 41, down 12-0 in Q3 → PUNT**")
-    
-    key_play = fourth_downs[fourth_downs['YARDS_TO_GO'] == 1].iloc[0]
-    
-    kp_col1, kp_col2 = st.columns(2)
-    with kp_col1:
-        st.metric("Win Prob Before", f"{key_play['WIN_PROB_PCT']:.1f}%")
-        st.metric("NFL 4th & 1 Conv Rate", "72%")
-    with kp_col2:
-        st.metric("WPA from Punt", f"{key_play['WPA_PCT']:.1f}%", delta="Lost", delta_color="inverse")
-        st.metric("Decision", "PUNT 👎")
-    
+    st.markdown("### Why This Was Wrong")
     st.markdown("""
-    **The Math:**
-    - Go for it: 72% convert → keep drive alive
-    - Even if fail: SEA gets ball at NE 41
-    - Punt: SEA gets ball at ~SEA 15
+    - **NFL 4th & 1 conversion rate: 72%**
+    - If convert: Keep driving, WP goes UP
+    - If fail: SEA ball at NE 41 (not much worse than punt)
+    - Punt: Gave up without a fight
     
-    **Net field position gain from punt: ~44 yards**  
-    **Not worth giving up 72% chance to convert!**
+    **Expected value clearly favored going for it!**
     """)
 
 st.markdown("---")
 
-# ============================================
-# TABS: Detailed Analysis
-# ============================================
-tab1, tab2 = st.tabs(["📊 All 4th Downs", "📈 Analysis"])
+# All plays table
+st.subheader("📊 All 4th Down Decisions")
 
-with tab1:
-    st.header("All Patriots 4th Down Decisions")
-    
-    display_df = fourth_downs.copy()
-    display_df['SITUATION'] = 'Q' + display_df['QUARTER'].astype(str) + ' ' + display_df['TIME'].astype(str)
-    display_df['DOWN_DIST'] = '4th & ' + display_df['YARDS_TO_GO'].astype(str)
-    display_df['SCORE'] = display_df['NE_SCORE'].astype(int).astype(str) + '-' + display_df['SEA_SCORE'].astype(int).astype(str)
-    
-    show_cols = ['SITUATION', 'DOWN_DIST', 'FIELD_POSITION', 'SCORE', 
-                 'WIN_PROB_PCT', 'WPA_PCT', 'EPA', 'GRADE']
-    
-    st.dataframe(display_df[show_cols], use_container_width=True, hide_index=True)
+display = fourth_downs.copy()
+display["SITUATION"] = "Q" + display["QUARTER"].astype(str) + " " + display["TIME"]
+display["4TH &"] = display["YARDS_TO_GO"]
+display["SCORE"] = display["NE_SCORE"].astype(str) + "-" + display["SEA_SCORE"].astype(str)
 
-with tab2:
-    st.header("Decision Analysis")
-    
-    col1, col2 = st.columns(2)
-    
-    with col1:
-        st.subheader("Win Probability Trend")
-        chart_df = fourth_downs.copy()
-        chart_df['Play #'] = range(1, len(chart_df) + 1)
-        st.bar_chart(chart_df.set_index('Play #')['WIN_PROB_PCT'])
-        st.caption("Win probability dropped with each conservative punt")
-    
-    with col2:
-        st.subheader("Decision Grades")
-        grade_counts = fourth_downs['GRADE'].value_counts()
-        
-        gcol1, gcol2, gcol3 = st.columns(3)
-        with gcol1:
-            bad = grade_counts.get('🔴 TERRIBLE', 0) + grade_counts.get('🔴 BAD', 0)
-            st.metric("🔴 Bad", bad)
-        with gcol2:
-            st.metric("🟡 Questionable", grade_counts.get('🟡 QUESTIONABLE', 0))
-        with gcol3:
-            st.metric("✅ OK", grade_counts.get('✅ OK', 0))
+st.dataframe(
+    display[["SITUATION", "4TH &", "FIELD_POSITION", "SCORE", "WIN_PROB", "WPA", "EPA", "GRADE"]],
+    use_container_width=True,
+    hide_index=True
+)
 
-# ============================================
-# SIDEBAR
-# ============================================
+st.markdown("---")
+
+# Chart
+st.subheader("📉 Win Probability Dropped With Each Punt")
+chart_data = fourth_downs.copy()
+chart_data["Play"] = range(1, len(chart_data) + 1)
+st.bar_chart(chart_data.set_index("Play")["WIN_PROB"])
+
+# Sidebar
 with st.sidebar:
     st.header("Super Bowl LX")
-    st.markdown("""
-    🦅 **Seahawks 29**  
-    🏈 **Patriots 13**
-    
-    📅 February 8, 2026  
-    🏟️ Levi's Stadium
-    """)
-    
+    st.markdown("🦅 Seahawks **29**")
+    st.markdown("🏈 Patriots **13**")
     st.markdown("---")
-    
-    st.markdown("""
-    **Metrics:**
-    - **WP** - Win Probability
-    - **WPA** - Win Prob Added
-    - **EPA** - Expected Points Added
-    
-    **Grades:**
-    - 🔴 Should have gone for it
-    - 🟡 Borderline / questionable
-    - ✅ Reasonable decision
-    """)
-    
+    st.markdown("📅 Feb 8, 2026")
+    st.markdown("🏟️ Levi's Stadium")
     st.markdown("---")
-    st.caption("Data: nflfastR | AI: Claude")
-
-st.markdown("---")
-st.caption("Built with Streamlit + Claude AI")
+    st.caption("Data: nflfastR")
