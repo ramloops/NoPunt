@@ -22,10 +22,6 @@ st.set_page_config(
 if "dark_mode" not in st.session_state:
     st.session_state.dark_mode = True  # Default to dark
 
-# Toggle in sidebar
-with st.sidebar:
-    st.session_state.dark_mode = st.toggle("🌙 Dark Mode", value=st.session_state.dark_mode)
-
 # Mobile-responsive base CSS (shared between themes)
 mobile_css = """
     /* Hide Streamlit header, footer, and menu */
@@ -484,9 +480,16 @@ def grade_decision(row):
 fourth_downs['GRADE'] = fourth_downs.apply(grade_decision, axis=1)
 
 # ============================================
-# HEADER
+# HEADER WITH DARK MODE TOGGLE
 # ============================================
-st.title("🏈 Super Bowl LX: 4th Down Analysis")
+header_col1, header_col2 = st.columns([4, 1])
+
+with header_col1:
+    st.title("🏈 Super Bowl LX: 4th Down Analysis")
+    
+with header_col2:
+    st.session_state.dark_mode = st.toggle("🌙", value=st.session_state.dark_mode, help="Dark/Light Mode")
+
 st.markdown("### Seahawks 29 - Patriots 13")
 st.markdown("*Why conservative play-calling cost New England the game*")
 
