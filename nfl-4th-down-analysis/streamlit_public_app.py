@@ -22,19 +22,54 @@ st.set_page_config(
 # ============================================
 @st.cache_resource
 def get_snowflake_connection():
-    """Create Snowflake connection from secrets"""
+    """Create Snowflake connection from secrets (supports password or key-pair auth)"""
     try:
         import snowflake.connector
         
-        conn = snowflake.connector.connect(
-            account=st.secrets["snowflake"]["account"],
-            user=st.secrets["snowflake"]["user"],
-            password=st.secrets["snowflake"]["password"],
-            warehouse=st.secrets["snowflake"]["warehouse"],
-            database=st.secrets["snowflake"]["database"],
-            schema=st.secrets["snowflake"]["schema"]
-        )
+        sf_config = st.secrets["snowflake"]
+        
+        # Base connection params
+        conn_params = {
+            "account": sf_config["account"],
+            "user": sf_config["user"],
+            "warehouse": sf_config["warehouse"],
+            "database": sf_config["database"],
+            "schema": sf_config["schema"],
+        }
+        
+        # Check for key-pair auth (preferred) or password auth
+        if "private_key" in sf_config:
+            # Key-pair authentication
+            from cryptography.hazmat.backends import default_backend
+            from cryptography.hazmat.primitives import serialization
+            
+            private_key_text = sf_config["private_key"]
+            
+            # Load the private key
+            p_key = serialization.load_pem_private_key(
+                private_key_text.encode(),
+                password=None,
+                backend=default_backend()
+            )
+            
+            # Get the raw bytes for Snowflake
+            pkb = p_key.private_bytes(
+                encoding=serialization.Encoding.DER,
+                format=serialization.PrivateFormat.PKCS8,
+                encryption_algorithm=serialization.NoEncryption()
+            )
+            
+            conn_params["private_key"] = pkb
+        elif "password" in sf_config:
+            # Password authentication (may not work with MFA)
+            conn_params["password"] = sf_config["password"]
+        else:
+            st.error("No authentication method found in secrets (need 'password' or 'private_key')")
+            return None
+        
+        conn = snowflake.connector.connect(**conn_params)
         return conn
+        
     except Exception as e:
         st.error(f"Snowflake connection error: {e}")
         return None
