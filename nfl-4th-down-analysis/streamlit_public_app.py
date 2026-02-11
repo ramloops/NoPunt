@@ -150,7 +150,7 @@ Answer questions concisely and reference specific plays from the data."""
             cursor.execute(f"USE WAREHOUSE {st.secrets['snowflake']['warehouse']}")
             
             # Escape single quotes in the prompt for SQL
-            escaped_prompt = full_prompt.replace("'", "'')"
+            escaped_prompt = full_prompt.replace("'", "''")
             
             # Call Cortex COMPLETE function
             # Try different models - mistral-large, llama3-70b, or mixtral-8x7b
