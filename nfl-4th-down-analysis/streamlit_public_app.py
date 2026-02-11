@@ -16,9 +16,18 @@ st.set_page_config(
     layout="wide"
 )
 
-# Dark mode CSS
-st.markdown("""
-<style>
+# ============================================
+# THEME TOGGLE
+# ============================================
+if "dark_mode" not in st.session_state:
+    st.session_state.dark_mode = True  # Default to dark
+
+# Toggle in sidebar
+with st.sidebar:
+    st.session_state.dark_mode = st.toggle("🌙 Dark Mode", value=st.session_state.dark_mode)
+
+# Mobile-responsive base CSS (shared between themes)
+mobile_css = """
     /* Hide Streamlit header, footer, and menu */
     #MainMenu {visibility: hidden;}
     header {visibility: hidden;}
@@ -28,82 +37,254 @@ st.markdown("""
     /* Reduce top padding since header is hidden */
     .main .block-container {
         padding-top: 1rem;
+        padding-left: 1rem;
+        padding-right: 1rem;
     }
     
-    /* Dark background */
-    .stApp {
-        background-color: #0e1117;
-        color: #fafafa;
+    /* Mobile responsive adjustments */
+    @media (max-width: 768px) {
+        .main .block-container {
+            padding-top: 0.5rem;
+            padding-left: 0.5rem;
+            padding-right: 0.5rem;
+        }
+        
+        /* Stack columns vertically on mobile */
+        [data-testid="column"] {
+            width: 100% !important;
+            flex: 1 1 100% !important;
+            min-width: 100% !important;
+        }
+        
+        /* Smaller title on mobile */
+        h1 {
+            font-size: 1.5rem !important;
+        }
+        
+        h2, h3 {
+            font-size: 1.2rem !important;
+        }
+        
+        /* Smaller metrics on mobile */
+        [data-testid="stMetricValue"] {
+            font-size: 1.25rem !important;
+        }
+        
+        [data-testid="stMetricLabel"] {
+            font-size: 0.75rem !important;
+        }
+        
+        /* Better tab sizing on mobile */
+        .stTabs [data-baseweb="tab"] {
+            padding: 0.5rem 0.75rem !important;
+            font-size: 0.85rem !important;
+        }
+        
+        /* Full width buttons on mobile */
+        .stButton > button {
+            width: 100% !important;
+            padding: 0.5rem !important;
+            font-size: 0.85rem !important;
+        }
+        
+        /* Adjust chat input on mobile */
+        [data-testid="stChatInput"] textarea {
+            font-size: 16px !important; /* Prevents zoom on iOS */
+        }
+        
+        /* Smaller text in chat */
+        [data-testid="stChatMessage"] {
+            font-size: 0.9rem !important;
+        }
+        
+        /* Better dataframe on mobile */
+        .stDataFrame {
+            font-size: 0.75rem !important;
+        }
+        
+        /* Reduce spacing */
+        hr {
+            margin-top: 1rem !important;
+            margin-bottom: 1rem !important;
+        }
     }
     
-    /* Sidebar dark */
-    [data-testid="stSidebar"] {
-        background-color: #161b22;
+    /* Small phone adjustments */
+    @media (max-width: 480px) {
+        h1 {
+            font-size: 1.25rem !important;
+        }
+        
+        [data-testid="stMetricValue"] {
+            font-size: 1rem !important;
+        }
+        
+        .stTabs [data-baseweb="tab"] {
+            padding: 0.4rem 0.5rem !important;
+            font-size: 0.75rem !important;
+        }
     }
-    
-    /* Metric styling */
-    [data-testid="stMetricValue"] {
-        color: #ffffff;
-    }
-    
-    [data-testid="stMetricLabel"] {
-        color: #8b949e;
-    }
-    
-    /* Tabs */
-    .stTabs [data-baseweb="tab-list"] {
-        gap: 8px;
-    }
-    
-    .stTabs [data-baseweb="tab"] {
-        background-color: transparent;
-        color: #8b949e;
-    }
-    
-    .stTabs [aria-selected="true"] {
-        background-color: #21262d;
-        color: #ffffff;
-    }
-    
-    /* Dataframe */
-    .stDataFrame {
-        background-color: #161b22;
-    }
-    
-    /* Chat messages */
-    [data-testid="stChatMessage"] {
-        background-color: #161b22;
-    }
-    
-    /* Buttons */
-    .stButton > button {
-        background-color: #21262d;
-        color: #ffffff;
-        border: 1px solid #30363d;
-    }
-    
-    .stButton > button:hover {
-        background-color: #30363d;
-        border-color: #8b949e;
-    }
-    
-    /* Chat input */
-    [data-testid="stChatInput"] {
-        background-color: #161b22;
-    }
-    
-    /* Expander */
-    .streamlit-expanderHeader {
-        background-color: #161b22;
-        color: #ffffff;
-    }
-    
-    /* Dividers */
-    hr {
-        border-color: #30363d;
-    }
-</style>
-""", unsafe_allow_html=True)
+"""
+
+# Dark mode CSS
+if st.session_state.dark_mode:
+    st.markdown(f"""
+    <style>
+        {mobile_css}
+        
+        /* Dark background */
+        .stApp {{
+            background-color: #0e1117;
+            color: #fafafa;
+        }}
+        
+        /* Sidebar dark */
+        [data-testid="stSidebar"] {{
+            background-color: #161b22;
+        }}
+        
+        /* Metric styling */
+        [data-testid="stMetricValue"] {{
+            color: #ffffff;
+        }}
+        
+        [data-testid="stMetricLabel"] {{
+            color: #8b949e;
+        }}
+        
+        /* Tabs */
+        .stTabs [data-baseweb="tab-list"] {{
+            gap: 8px;
+        }}
+        
+        .stTabs [data-baseweb="tab"] {{
+            background-color: transparent;
+            color: #8b949e;
+        }}
+        
+        .stTabs [aria-selected="true"] {{
+            background-color: #21262d;
+            color: #ffffff;
+        }}
+        
+        /* Dataframe */
+        .stDataFrame {{
+            background-color: #161b22;
+        }}
+        
+        /* Chat messages */
+        [data-testid="stChatMessage"] {{
+            background-color: #161b22;
+        }}
+        
+        /* Buttons */
+        .stButton > button {{
+            background-color: #21262d;
+            color: #ffffff;
+            border: 1px solid #30363d;
+        }}
+        
+        .stButton > button:hover {{
+            background-color: #30363d;
+            border-color: #8b949e;
+        }}
+        
+        /* Chat input */
+        [data-testid="stChatInput"] {{
+            background-color: #161b22;
+        }}
+        
+        /* Expander */
+        .streamlit-expanderHeader {{
+            background-color: #161b22;
+            color: #ffffff;
+        }}
+        
+        /* Dividers */
+        hr {{
+            border-color: #30363d;
+        }}
+    </style>
+    """, unsafe_allow_html=True)
+else:
+    st.markdown(f"""
+    <style>
+        {mobile_css}
+        
+        /* Light background */
+        .stApp {{
+            background-color: #ffffff;
+            color: #1a1a1a;
+        }}
+        
+        /* Sidebar light */
+        [data-testid="stSidebar"] {{
+            background-color: #f6f8fa;
+        }}
+        
+        /* Metric styling */
+        [data-testid="stMetricValue"] {{
+            color: #1a1a1a;
+        }}
+        
+        [data-testid="stMetricLabel"] {{
+            color: #57606a;
+        }}
+        
+        /* Tabs */
+        .stTabs [data-baseweb="tab-list"] {{
+            gap: 8px;
+        }}
+        
+        .stTabs [data-baseweb="tab"] {{
+            background-color: transparent;
+            color: #57606a;
+        }}
+        
+        .stTabs [aria-selected="true"] {{
+            background-color: #f6f8fa;
+            color: #1a1a1a;
+        }}
+        
+        /* Dataframe */
+        .stDataFrame {{
+            background-color: #f6f8fa;
+        }}
+        
+        /* Chat messages */
+        [data-testid="stChatMessage"] {{
+            background-color: #f6f8fa;
+        }}
+        
+        /* Buttons */
+        .stButton > button {{
+            background-color: #f6f8fa;
+            color: #1a1a1a;
+            border: 1px solid #d0d7de;
+        }}
+        
+        .stButton > button:hover {{
+            background-color: #eaeef2;
+            border-color: #57606a;
+        }}
+        
+        /* Chat input */
+        [data-testid="stChatInput"] {{
+            background-color: #f6f8fa;
+        }}
+        
+        /* Expander */
+        .streamlit-expanderHeader {{
+            background-color: #f6f8fa;
+            color: #1a1a1a;
+        }}
+        
+        /* Dividers */
+        hr {{
+            border-color: #d0d7de;
+        }}
+    </style>
+    """, unsafe_allow_html=True)
 
 # ============================================
 # SNOWFLAKE CONNECTION
