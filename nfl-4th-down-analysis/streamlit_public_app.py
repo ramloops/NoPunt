@@ -2,6 +2,7 @@
 Super Bowl LX 4th Down Analysis
 ================================
 Public Streamlit App with AI Chat on Home Screen
+Uses Snowflake Cortex for AI (via SQL)
 """
 
 import streamlit as st
@@ -15,6 +16,28 @@ st.set_page_config(
     page_icon="🏈",
     layout="wide"
 )
+
+# ============================================
+# SNOWFLAKE CONNECTION
+# ============================================
+@st.cache_resource
+def get_snowflake_connection():
+    """Create Snowflake connection from secrets"""
+    try:
+        import snowflake.connector
+        
+        conn = snowflake.connector.connect(
+            account=st.secrets["snowflake"]["account"],
+            user=st.secrets["snowflake"]["user"],
+            password=st.secrets["snowflake"]["password"],
+            warehouse=st.secrets["snowflake"]["warehouse"],
+            database=st.secrets["snowflake"]["database"],
+            schema=st.secrets["snowflake"]["schema"]
+        )
+        return conn
+    except Exception as e:
+        st.error(f"Snowflake connection error: {e}")
+        return None
 
 # ============================================
 # SAMPLE DATA
@@ -57,33 +80,15 @@ def get_fourth_down_data():
     ])
 
 # ============================================
-# AI CHAT FUNCTION
+# AI CHAT FUNCTION - SNOWFLAKE CORTEX
 # ============================================
 def get_ai_response(question, fourth_downs_df):
-    """Get AI response about the game data"""
-    try:
-        import anthropic
-        
-        # Try different ways to get the API key from secrets
-        api_key = None
-        
-        # Method 1: Direct key
-        if "ANTHROPIC_API_KEY" in st.secrets:
-            api_key = st.secrets["ANTHROPIC_API_KEY"]
-        # Method 2: Nested under api_keys
-        elif "api_keys" in st.secrets and "ANTHROPIC_API_KEY" in st.secrets["api_keys"]:
-            api_key = st.secrets["api_keys"]["ANTHROPIC_API_KEY"]
-        # Method 3: Nested under anthropic
-        elif "anthropic" in st.secrets and "api_key" in st.secrets["anthropic"]:
-            api_key = st.secrets["anthropic"]["api_key"]
-        
-        if not api_key:
-            return "⚠️ API key not configured. Add ANTHROPIC_API_KEY to your Streamlit secrets."
-        
-        # Build context from data
-        data_context = fourth_downs_df.to_string()
-        
-        system_prompt = f"""You are an NFL analytics expert analyzing the Patriots' 4th down decisions in Super Bowl LX (Seahawks 29, Patriots 13).
+    """Get AI response using Snowflake Cortex via SQL"""
+    
+    # Build context from data
+    data_context = fourth_downs_df.to_string()
+    
+    system_prompt = f"""You are an NFL analytics expert analyzing the Patriots' 4th down decisions in Super Bowl LX (Seahawks 29, Patriots 13).
 
 Here is the data on all Patriots 4th down plays:
 {data_context}
@@ -96,18 +101,55 @@ Key facts:
 
 Answer questions concisely and reference specific plays from the data."""
 
-        client = anthropic.Anthropic(api_key=api_key)
-        
-        message = client.messages.create(
-            model="claude-sonnet-4-20250514",
-            max_tokens=500,
-            system=system_prompt,
-            messages=[{"role": "user", "content": question}]
-        )
-        
-        return message.content[0].text
+    # Combine system prompt and user question
+    full_prompt = f"{system_prompt}\n\nUser question: {question}"
+    
+    # Try Snowflake Cortex first
+    try:
+        conn = get_snowflake_connection()
+        if conn:
+            cursor = conn.cursor()
+            
+            # Escape single quotes in the prompt for SQL
+            escaped_prompt = full_prompt.replace("'", "''")
+            
+            # Call Cortex COMPLETE function
+            # Try different models - mistral-large, llama3-70b, or mixtral-8x7b
+            sql = f"""
+            SELECT SNOWFLAKE.CORTEX.COMPLETE(
+                'mistral-large',
+                '{escaped_prompt}'
+            ) as response
+            """
+            
+            cursor.execute(sql)
+            result = cursor.fetchone()
+            cursor.close()
+            
+            if result and result[0]:
+                return result[0]
+            else:
+                return "No response from Cortex"
+                
     except Exception as e:
-        return f"AI error: {str(e)[:150]}"
+        error_msg = str(e)
+        
+        # If Cortex fails, try Anthropic as fallback
+        if "ANTHROPIC_API_KEY" in st.secrets:
+            try:
+                import anthropic
+                client = anthropic.Anthropic(api_key=st.secrets["ANTHROPIC_API_KEY"])
+                message = client.messages.create(
+                    model="claude-sonnet-4-20250514",
+                    max_tokens=500,
+                    system=system_prompt,
+                    messages=[{"role": "user", "content": question}]
+                )
+                return message.content[0].text
+            except Exception as anthropic_error:
+                return f"Cortex error: {error_msg[:100]}\n\nAnthropic fallback error: {str(anthropic_error)[:100]}"
+        
+        return f"⚠️ Cortex error: {error_msg[:200]}\n\nTip: Make sure your Snowflake account has Cortex enabled."
 
 # ============================================
 # LOAD DATA
@@ -172,6 +214,7 @@ chat_col, play_col = st.columns([1, 1])
 # ============================================
 with chat_col:
     st.subheader("🤖 Ask About the Game")
+    st.caption("Powered by Snowflake Cortex")
     
     # Initialize chat history
     if "messages" not in st.session_state:
@@ -208,7 +251,7 @@ with chat_col:
         
         # Get AI response
         with st.chat_message("assistant"):
-            with st.spinner("Analyzing..."):
+            with st.spinner("Analyzing with Cortex..."):
                 response = get_ai_response(question, fourth_downs)
                 st.markdown(response)
         
@@ -317,7 +360,20 @@ with st.sidebar:
     """)
     
     st.markdown("---")
-    st.caption("Data: nflfastR | AI: Claude")
+    
+    # Connection status
+    st.subheader("🔌 Status")
+    try:
+        conn = get_snowflake_connection()
+        if conn:
+            st.success("Snowflake: Connected")
+        else:
+            st.error("Snowflake: Not connected")
+    except:
+        st.error("Snowflake: Error")
+    
+    st.markdown("---")
+    st.caption("Data: nflfastR | AI: Snowflake Cortex")
 
 st.markdown("---")
-st.caption("Built with Streamlit + Claude AI")
+st.caption("Built with Streamlit + Snowflake Cortex")
