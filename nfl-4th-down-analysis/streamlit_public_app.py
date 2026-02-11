@@ -19,6 +19,17 @@ st.set_page_config(
 # Dark mode CSS
 st.markdown("""
 <style>
+    /* Hide Streamlit header, footer, and menu */
+    #MainMenu {visibility: hidden;}
+    header {visibility: hidden;}
+    footer {visibility: hidden;}
+    [data-testid="stHeader"] {display: none;}
+    
+    /* Reduce top padding since header is hidden */
+    .main .block-container {
+        padding-top: 1rem;
+    }
+    
     /* Dark background */
     .stApp {
         background-color: #0e1117;
@@ -321,95 +332,94 @@ with col4:
 
 st.markdown("---")
 
-# Two columns: AI Chat on left, Key Play on right
-chat_col, play_col = st.columns([1, 1])
+# ============================================
+# TABS: All content in tabs to avoid scrolling
+# ============================================
+tab_home, tab_data, tab_analysis = st.tabs(["🏠 Overview", "📊 All 4th Downs", "📈 Analysis"])
 
-# ============================================
-# LEFT: AI CHAT
-# ============================================
-with chat_col:
-    st.subheader("🤖 Ask About the Game")
-    st.caption("Powered by Snowflake Cortex")
-    
-    # Initialize chat history
-    if "messages" not in st.session_state:
-        st.session_state.messages = []
-    
-    # Display chat history
-    for message in st.session_state.messages:
-        with st.chat_message(message["role"]):
-            st.markdown(message["content"])
-    
-    # Example questions
-    st.caption("Try asking:")
-    example_cols = st.columns(2)
-    with example_cols[0]:
-        if st.button("What was the worst decision?", use_container_width=True):
-            st.session_state.pending_question = "What was the worst 4th down decision and why?"
-    with example_cols[1]:
-        if st.button("Should they have gone for it?", use_container_width=True):
-            st.session_state.pending_question = "Should the Patriots have gone for it on 4th & 1?"
-    
-    # Chat input
-    question = st.chat_input("Ask about Patriots' 4th down decisions...")
-    
-    # Handle pending question from button click
-    if "pending_question" in st.session_state:
-        question = st.session_state.pending_question
-        del st.session_state.pending_question
-    
-    if question:
-        # Add user message
-        st.session_state.messages.append({"role": "user", "content": question})
-        with st.chat_message("user"):
-            st.markdown(question)
+with tab_home:
+    # Two columns: AI Chat on left, Key Play on right
+    chat_col, play_col = st.columns([1, 1])
+
+    # ============================================
+    # LEFT: AI CHAT
+    # ============================================
+    with chat_col:
+        st.subheader("🤖 Ask About the Game")
+        st.caption("Powered by Snowflake Cortex")
         
-        # Get AI response
-        with st.chat_message("assistant"):
-            with st.spinner("Analyzing with Cortex..."):
-                response = get_ai_response(question, fourth_downs)
-                st.markdown(response)
+        # Initialize chat history
+        if "messages" not in st.session_state:
+            st.session_state.messages = []
         
-        st.session_state.messages.append({"role": "assistant", "content": response})
-        st.rerun()
+        # Display chat history
+        for message in st.session_state.messages:
+            with st.chat_message(message["role"]):
+                st.markdown(message["content"])
+        
+        # Example questions
+        st.caption("Try asking:")
+        example_cols = st.columns(2)
+        with example_cols[0]:
+            if st.button("What was the worst decision?", use_container_width=True):
+                st.session_state.pending_question = "What was the worst 4th down decision and why?"
+        with example_cols[1]:
+            if st.button("Should they have gone for it?", use_container_width=True):
+                st.session_state.pending_question = "Should the Patriots have gone for it on 4th & 1?"
+        
+        # Chat input
+        question = st.chat_input("Ask about Patriots' 4th down decisions...")
+        
+        # Handle pending question from button click
+        if "pending_question" in st.session_state:
+            question = st.session_state.pending_question
+            del st.session_state.pending_question
+        
+        if question:
+            # Add user message
+            st.session_state.messages.append({"role": "user", "content": question})
+            with st.chat_message("user"):
+                st.markdown(question)
+            
+            # Get AI response
+            with st.chat_message("assistant"):
+                with st.spinner("Analyzing with Cortex..."):
+                    response = get_ai_response(question, fourth_downs)
+                    st.markdown(response)
+            
+            st.session_state.messages.append({"role": "assistant", "content": response})
+            st.rerun()
 
-# ============================================
-# RIGHT: THE KEY PLAY
-# ============================================
-with play_col:
-    st.subheader("🔥 The Key Play")
-    
-    # Highlight box
-    st.error("**4th & 1 from own 41, down 12-0 in Q3 → PUNT**")
-    
-    key_play = fourth_downs[fourth_downs['YARDS_TO_GO'] == 1].iloc[0]
-    
-    kp_col1, kp_col2 = st.columns(2)
-    with kp_col1:
-        st.metric("Win Prob Before", f"{key_play['WIN_PROB_PCT']:.1f}%")
-        st.metric("NFL 4th & 1 Conv Rate", "72%")
-    with kp_col2:
-        st.metric("WPA from Punt", f"{key_play['WPA_PCT']:.1f}%", delta="Lost", delta_color="inverse")
-        st.metric("Decision", "PUNT 👎")
-    
-    st.markdown("""
-    **The Math:**
-    - Go for it: 72% convert → keep drive alive
-    - Even if fail: SEA gets ball at NE 41
-    - Punt: SEA gets ball at ~SEA 15
-    
-    **Net field position gain from punt: ~44 yards**  
-    **Not worth giving up 72% chance to convert!**
-    """)
+    # ============================================
+    # RIGHT: THE KEY PLAY
+    # ============================================
+    with play_col:
+        st.subheader("🔥 The Key Play")
+        
+        # Highlight box
+        st.error("**4th & 1 from own 41, down 12-0 in Q3 → PUNT**")
+        
+        key_play = fourth_downs[fourth_downs['YARDS_TO_GO'] == 1].iloc[0]
+        
+        kp_col1, kp_col2 = st.columns(2)
+        with kp_col1:
+            st.metric("Win Prob Before", f"{key_play['WIN_PROB_PCT']:.1f}%")
+            st.metric("NFL 4th & 1 Conv Rate", "72%")
+        with kp_col2:
+            st.metric("WPA from Punt", f"{key_play['WPA_PCT']:.1f}%", delta="Lost", delta_color="inverse")
+            st.metric("Decision", "PUNT 👎")
+        
+        st.markdown("""
+        **The Math:**
+        - Go for it: 72% convert → keep drive alive
+        - Even if fail: SEA gets ball at NE 41
+        - Punt: SEA gets ball at ~SEA 15
+        
+        **Net field position gain from punt: ~44 yards**  
+        **Not worth giving up 72% chance to convert!**
+        """)
 
-st.markdown("---")
-
-# ============================================
-# TABS: Detailed Analysis
-# ============================================
-tab1, tab2 = st.tabs(["📊 All 4th Downs", "📈 Analysis"])
-
-with tab1:
+with tab_data:
     st.header("All Patriots 4th Down Decisions")
     
     display_df = fourth_downs.copy()
@@ -422,7 +432,7 @@ with tab1:
     
     st.dataframe(display_df[show_cols], use_container_width=True, hide_index=True)
 
-with tab2:
+with tab_analysis:
     st.header("Decision Analysis")
     
     col1, col2 = st.columns(2)
